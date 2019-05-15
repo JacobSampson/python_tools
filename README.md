@@ -1,7 +1,8 @@
 # **python_tools**
 *Various python programs for repetitive tasks*
 
-## pdf_translation
+## activity_assigner
 
-Converts files to their PDF equivalent and inserts related files into a compiled PDF, if specified  
-Specifically designed for use in creating PDF manuals with pages referencing other PDFs where different pages are stored as different working file types
+Given an Excel file of names with picks for classes, randomly assign names to classes, prioritizing individual picks  
+Intended for use in education settings where students are given a list of options for choices and there are limited seats available for each  
+
