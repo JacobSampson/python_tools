@@ -1,7 +1,9 @@
 # Class to model a student with choices
 class Student:
-    def __init__(self, name=None):
-        self.name = name
+    def __init__(self, email=None, first_name=None, last_name=None):
+        self.email = email
+        self.first_name = first_name
+        self.last_name = last_name
         self.choices = {}
         self.assigned = {}
 

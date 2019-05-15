@@ -1,61 +1,51 @@
-import xlrd
-
 import sys
 import random
 
 from models.student import Student
 
-def find_section(sheet=None, identifier=""):
-    index = 0
-
-    while(str(sheet.cell_value(index, 0)).lower() != identifier.lower()):
-        index += 1
-
-        if (index > sheet.nrows):
-            return -1
-
-    return index
-
-def create_choices(sheet=None, index=0):
-    # Initialize the choices
-    choices = {}
-
-    index = find_section(sheet=sheet, identifier="Options") + 1
-    cell_value = sheet.cell_value(index, 0)
-    while (cell_value != "Students" and cell_value != ''):
-        choices[cell_value] = sheet.cell_value(index, 1)
-        index += 1
-        cell_value = sheet.cell_value(index, 0)
-
-    return choices
-
-def create_students(sheet=None, index=0, choices={}):
-    # Create the students and add the choices for each
+# Create the students and add the choices for each
+def create_students(choice_list=None, choices={}):
     students = []
 
-    num_choices = sheet.ncols - 1
-    num_students = sheet.nrows - len(choices) - 2
+    choice_list.readline()
 
-    index = find_section(sheet=sheet, identifier="Students") + 1
-    cell_value = sheet.cell_value(index, 0)
+    num_student = 0
+    for line in choice_list:
+        cells = line.split(",")
 
-    for i in range(num_students):
-        cell_value = sheet.cell(index, 0).value
+        email = cells[1].strip("\"")
+        last_name = cells[2].strip("\"")
+        first_name = cells[3].strip("\"")
 
-        students.append(Student(name=cell_value))
+        students.append(Student(email=email, first_name=first_name, last_name=last_name))
 
-        for j in range(num_choices):
-            choice = sheet.cell_value(index, j + 1)
-            students[i].add_choice(choice=choice, rank=j)
+        # Add and create new choices
+        student_choices = cells[4:]
+        for i in range(len(student_choices)):
+            choice = student_choices[i]
+            
+            # Strip newlines and quotes
+            choice = choice[0:len(choice) - 1] if choice[len(choice) - 1] == '\n' else choice
+            choice = choice[1:len(choice) - 1]
 
-        index += 1
+            students[num_student].add_choice(choice=choice, rank=i)
+
+            if not choice in choices:
+                choices[choice] = 0
+
+        num_student += 1
 
     return students
 
+# Set the limits of each choice
+def set_choice_limits(choices={}):
+    for choice in choices:
+        choices[choice] = int(input("[" + choice + "] Enter the number of spots available: "))
+
+# Assign students to choices based on rankings
 def assign_choice(students=[], choices={}):
     random.shuffle(students)
 
-    # Assign students to choices based son rankings
     assigned_students = []
 
     for i in range(len(students)):
@@ -80,37 +70,46 @@ def assign_choice(students=[], choices={}):
         assigned_students.append(student)
 
     students = assigned_students
-
-def write_assignments(students=[]):
-    # Write assignments to file
-    write_loc = "./write_results.csv"
-
-    for student in students:
-        print(student.name, end='')
-
-        for assignment in student.get_assigned():
-            print(',' + assignment, end='')
-
-        print()
-
-# read_loc = sys.argv[1] if len(sys.argv) > 1 else input("Enter file name: ")
-read_loc = sys.argv[1] if len(sys.argv) > 1 else "./src/activity_assigner/test/test.xlsx"
-
-wb = xlrd.open_workbook(read_loc)
-sheet = wb.sheet_by_index(0)
-
-choices = create_choices(sheet=sheet)
-
-print(choices)
-
-students = create_students(sheet=sheet, choices=choices)
-# random.shuffle(students)
-
-for i in range(2):
-    assign_choice(students=students, choices=choices)
-
     students.reverse()
 
-write_assignments(students=students)
+# Write assignments to file
+def write_assignments(students=[], num_choices=0):
+    write_loc = input("Enter save location: ")
+
+    f = open(write_loc, "w")
+
+    f.write("Email,Last Name,First Name")
+
+    for i in range(num_choices):
+        f.write(",Choice " + str(i + 1))
+
+    f.write('\n')
+
+    for student in students:
+        f.write(student.email + ',')
+        f.write(student.last_name + ',')
+        f.write(student.first_name)
+
+        for assignment in student.get_assigned():
+            f.write(',' + assignment)
+
+        f.write('\n')
+
+    f.close()
+
+read_loc = sys.argv[1] if len(sys.argv) > 1 else input("Enter file name: ")
+
+choices = {}
+
+with open(read_loc) as choice_list:
+    students = create_students(choice_list=choice_list, choices=choices)
+
+set_choice_limits(choices=choices)
+
+NUM_CHOICES = 2
+for i in range(NUM_CHOICES):
+    assign_choice(students=students, choices=choices)
+
+write_assignments(students=students, num_choices=NUM_CHOICES)
 
 print(choices)
