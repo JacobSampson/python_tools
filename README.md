@@ -1,5 +1,5 @@
 # **python_tools**
-*Various python programs for automating tedious tasks*
+*Assortment of Python programs for repetitive tasks*
 
 ---
 
